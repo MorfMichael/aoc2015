@@ -7,12 +7,13 @@ Console.WriteLine(Part2(input));
 
 int Part1(string[] input)
 {
-    string[] not = new[] { "ab", "cd", "pq", "xy" };
-    string vowel = "aeiou";
     int count = 0;
     foreach (var line in input)
     {
-        if (line.Count(t => vowel.Contains(t)) >= 3 && (line.Chunk(2).Any(t => t.Length == 2 && t[0] == t[1]) || line.Skip(1).Chunk(2).Any(t => t.Length == 2 && t[0] == t[1])) && !not.Any(t => line.Contains(t))) count++;
+        bool rule1 = Regex.Matches(line, @"[aeiou]").Count >= 3;
+        bool rule2 = Regex.IsMatch(line, @"([a-z])\1");
+        bool rule3 = !Regex.IsMatch(line, @"^(.*)((ab)|(cd)|(pq)|(xy))(.*)$");
+        if (rule1 && rule2 && rule3) count++;
     }
     return count;
 }
@@ -22,8 +23,11 @@ int Part2(string[] input)
     int count = 0;
     foreach (var line in input)
     {
-        if (Regex.IsMatch(line, @"([a-z]).\1|([a-z])\2"))
+        bool rule1 = Regex.IsMatch(line, @"([a-z]{2})(.*)\1");
+        bool rule2 = Regex.IsMatch(line, @"([a-z]).\1");
+        if (rule1 && rule2)
         {
+            count++;
         }
     }
     return count;
