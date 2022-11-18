@@ -72,5 +72,17 @@ int Part1b(string[] input)
 
 int Part2(string[] input)
 {
-    return 0;
+    int a = 0, b = 0;
+
+    foreach (var line in input)
+    {
+        b += line.Length;
+
+        string replaced = line.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\'", "\\\'");
+        replaced = "\"" + replaced + "\"";
+        int count = replaced.Length;
+        a += count;
+    }
+
+    return a - b;
 }
