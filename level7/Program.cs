@@ -9,9 +9,8 @@ using Microsoft.VisualBasic;
 
 string[] input = File.ReadAllLines("level7.in");
 
-//Console.WriteLine(Part1(input));
+Console.WriteLine(Part1(input));
 Console.WriteLine(Part2(input));
-
 
 int Part1(string[] input)
 {
@@ -35,7 +34,6 @@ int Part2(string[] input)
     Dictionary<string, ushort> signals = new Dictionary<string, ushort>();
     signals.Add("b", 46065);
     List<Operation> operations = input.Select(Operation.Parse).ToList();
-    //operations.Insert(0, Operation.Parse("a -> b"));
 
     Operation operation = operations.FirstOrDefault(x => !x.Finished);
     while (operation != null)
@@ -50,16 +48,6 @@ int Part2(string[] input)
     return signals["a"];
 }
 
-/*
-x AND y -> d
-x OR y -> e
-x LSHIFT 2 -> f
-y RSHIFT 2 -> g
-NOT x -> h
-NOT y -> i
-123 -> x
-456 -> y
- * */
 public abstract class Operation
 {
     public string Source { get; set; }
