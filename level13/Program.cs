@@ -7,7 +7,7 @@ List<string> names = new();
 
 Console.WriteLine(" --- LEVEL 13 --- ");
 
-Parse(input);
+Parse(input, true);
 
 Console.WriteLine("Part1: " + Part1(input));
 
