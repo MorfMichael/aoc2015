@@ -9,7 +9,7 @@ Console.WriteLine(" --- LEVEL 15 --- ");
 Parse(input);
 
 Console.WriteLine("Part1: " + Part1());
-//Console.WriteLine("Part1: " + Part2());
+Console.WriteLine("Part2: " + Part2());
 
 
 void Parse(string[] input)
@@ -22,7 +22,7 @@ int Part1()
     var permutations = GetPermutations();
 
     List<string> properties = ingredients.SelectMany(t => t.Properties).Select(t => t.Key).Distinct().ToList();
-    
+
     List<int> scores = new();
 
     foreach (var permutation in permutations)
@@ -45,7 +45,32 @@ int Part1()
 
 int Part2()
 {
-    return 0;
+    var permutations = GetPermutations();
+
+    List<string> properties = ingredients.SelectMany(t => t.Properties).Select(t => t.Key).Distinct().ToList();
+
+    List<(int, int)> scores = new();
+
+    foreach (var permutation in permutations)
+    {
+        int permsum = 1;
+        int calories = 1;
+        foreach (var property in properties)
+        {
+            int sum = 0;
+            for (int i = 0; i < permutation.Count; i++)
+            {
+                sum += permutation[i] * ingredients[i].Properties[property];
+            }
+            if (property == "calories")
+                calories *= (sum < 0 ? 0 : sum);
+            else
+                permsum *= (sum < 0 ? 0 : sum);
+        }
+        scores.Add((permsum,calories));
+    }
+
+    return scores.Where(t => t.Item2 == 500).Max(x => x.Item1);
 }
 
 List<List<int>> GetPermutations()
@@ -107,7 +132,7 @@ class Ingredient
             Properties.Add(propsplit[0], int.Parse(propsplit[1]));
         }
     }
-    
+
     public string Name { get; set; }
 
     public Dictionary<string, int> Properties { get; set; } = new();
