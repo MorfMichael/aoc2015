@@ -56,7 +56,14 @@ class Aunt
         foreach (var check in checks)
         {
             if (Properties.ContainsKey(check.property))
-                result.Add((check.property, Properties[check.property] == check.value));
+            {
+                if (check.property == "cats" || check.property == "trees")
+                    result.Add((check.property, Properties[check.property] > check.value));
+                else if (check.property == "pomeranians" || check.property == "goldfish")
+                    result.Add((check.property, Properties[check.property] < check.value));
+                else
+                    result.Add((check.property, Properties[check.property] == check.value));
+            }
         }
 
         return result.All(x => x.correct);
