@@ -1,6 +1,6 @@
-﻿using System.Security.Cryptography.X509Certificates;
+﻿using System.Linq;
 
-string[] input = File.ReadAllLines("sample.in");
+string[] input = File.ReadAllLines("level15.in");
 
 List<Ingredient> ingredients = new();
 
@@ -19,9 +19,28 @@ void Parse(string[] input)
 
 int Part1()
 {
-    var permutations = GetPermutations(ingredients.Count);
+    var permutations = GetPermutations();
 
-    return 0;
+    List<string> properties = ingredients.SelectMany(t => t.Properties).Select(t => t.Key).Distinct().ToList();
+    
+    List<int> scores = new();
+
+    foreach (var permutation in permutations)
+    {
+        int permsum = 1;
+        foreach (var property in properties.Where(t => t != "calories"))
+        {
+            int sum = 0;
+            for (int i = 0; i < permutation.Count; i++)
+            {
+                sum += permutation[i] * ingredients[i].Properties[property];
+            }
+            permsum *= (sum < 0 ? 0 : sum);
+        }
+        scores.Add(permsum);
+    }
+
+    return scores.Max();
 }
 
 int Part2()
@@ -29,18 +48,25 @@ int Part2()
     return 0;
 }
 
-List<List<int>> GetPermutations(int count)
+List<List<int>> GetPermutations()
 {
     List<List<int>> result = new();
 
-    var possible = Enumerable.Range(0,count).Select(t => Enumerable.Range(1, 100).ToList()).ToList();
-
-    foreach (var p in possible)
+    for (int a = 1; a <= 100; a++)
     {
-        
+        for (int b = 1; b <= 100; b++)
+        {
+            for (int c = 1; c <= 100; c++)
+            {
+                for (int d = 1; d <= 100; d++)
+                {
+                    if (a + b + c + d == 100) result.Add(new List<int> { a, b, c, d });
+                }
+            }
+        }
     }
 
-    return possible;
+    return result;
 }
 
 class Ingredient
