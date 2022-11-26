@@ -22,6 +22,12 @@ for (int c = 0; c < steps; c++)
     {
         for (int j = 0; j < map.GetLength(1); j++)
         {
+            if (IsCorner(j, i))
+            {
+                newmap[i, j] = true;
+                continue;
+            }
+
             var neighbours = GetNeighbours(i, j);
             if (map[i, j])
             {
@@ -65,8 +71,15 @@ List<(int x, int y, bool value)> GetNeighbours(int y, int x)
     };
 }
 
-bool GetValue(int x, int y)
+bool IsCorner(int x, int y) => ((x == 0 && y == 0) ||
+        (x == map.GetLength(1) - 1 && y == 0) ||
+        (x == 0 && y == map.GetLength(0) - 1) ||
+        (x == map.GetLength(1) - 1 && y == map.GetLength(0) - 1));
+
+    bool GetValue(int x, int y)
 {
+    if (IsCorner(x,y)) return true;
+
     if (x >= 0 && x < map.GetLength(1) && y >= 0 && y < map.GetLength(0)) return map[y, x];
     return false;
 }
