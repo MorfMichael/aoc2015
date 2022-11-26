@@ -1,36 +1,20 @@
-﻿List<Container> input = File.ReadAllLines("sample.in").Select(t => new Container(int.Parse(t))).ToList();
+﻿List<int> input = File.ReadAllLines("level17.in").Select(int.Parse).OrderBy(x => x).ToList();
 
-List<List<Container>> result = new List<List<Container>>();
-Permutate(new List<Container>(), input, result, 25);
-foreach (var permutation in result)
-{
-    Console.WriteLine(string.Join(",", permutation.Select(t => t.Size)));
-}
+int count = 0;
+Calculate(0, 150);
+Console.WriteLine(count);
 
-void Permutate(IEnumerable<Container> current, IEnumerable<Container> source, List<List<Container>> result, int check)
+void Calculate(int start, int check)
 {
-    foreach (var container in source)
+    if (check > 0)
     {
-        var newcurrent = current.Append(container);
-
-        if (newcurrent.Sum(x => x.Size) == check && !result.Any(t => newcurrent.All(x => t.Contains(x))))
+        for (int i = start; i < input.Count; i++)
         {
-            result.Add(newcurrent.ToList());
-        }
-        else if (newcurrent.Sum(x => x.Size) < check)
-        {
-            Permutate(current.Append(container), source.Where(t => t != container), result, check);
+            if (input[i] > check) return;
+            check -= input[i];
+            if (check == 0) count++;
+            Calculate(i + 1, check);
+            check += input[i];
         }
     }
-}
-
-class Container
-{
-    public int Size { get; set; }
-    public Container(int size)
-    {
-        Size = size;
-    }
-
-    public override string ToString() => Size.ToString();
 }
