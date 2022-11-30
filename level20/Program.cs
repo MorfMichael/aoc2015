@@ -1,10 +1,20 @@
-﻿int input = 36000000;
+﻿using System.Runtime.InteropServices;
+
+int input = 36000000;
+
+Dictionary<int, int> elves = new();
 
 int house = 0;
 long count = 0;
 while (count < input)
 {
-    count = GetDivisorsMe(++house).Sum(x => x*10);
+    var divisors = GetDivisorsMe(++house);
+    foreach (var divisor in divisors)
+    {
+        if (elves.ContainsKey(divisor)) elves[divisor]++;
+        else elves.Add(divisor, 1);
+    }
+    count = divisors.Sum(t => elves[t] < 50 ? (t * 11) : 0);
 }
 
 Console.WriteLine($"House {house}: {count}");
