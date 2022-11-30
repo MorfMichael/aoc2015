@@ -15,20 +15,20 @@ foreach (var line in input[0..^2])
     replacements.Add((split[0], split[1]));
 }
 
-foreach ((string Key, string Value) in replacements)
+replacements = replacements.Where(t => t.Value != "SiTh").OrderBy(t => t.Key).ToList(); // error
+
+int count = 0;
+while (replacements.Any(t => sb.Contains(t.Value)))
 {
-    var matches = Regex.Matches(sb, Key).OfType<Match>().ToList();
-    foreach (var match in matches)
+    foreach ((string Key, string Value) in replacements)
     {
-        current = sb.Remove(match.Index, Key.Length).Insert(match.Index, Value);
-        Console.WriteLine(current);
-        result.Add(current);
+        if (sb.Contains(Value))
+        {
+            count += Regex.Matches(sb, Value).Count;
+            sb = sb.Replace(Value, Key);
+        }
     }
 }
 
-Console.WriteLine();
-Console.WriteLine(string.Join(Environment.NewLine, result.Distinct()));
-
-Console.WriteLine(result.Distinct().Count());
-
-
+Console.WriteLine(sb);
+Console.WriteLine(count);
