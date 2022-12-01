@@ -1,115 +1,44 @@
-﻿int[] input = File.ReadAllLines("level24.in").Select(int.Parse).OrderByDescending(x => x).ToArray();
+﻿using System.Collections.Specialized;
+using System.Reflection.Metadata.Ecma335;
 
-int size = input.Sum() / 3;
+int[] input = File.ReadAllLines("level24.in").Select(int.Parse).OrderByDescending(x => x).ToArray();
 
-List<(Group a, Group b, Group c)> bla = new();
+// part 1
+//int size = input.Sum() / 3;
+// part 2
+int size = input.Sum() / 4;
+int count = int.MaxValue;
 
-Permutationa(new Group(), new Group(), new Group(), input, size, bla);
+List<List<long>> permutations = Permutation(new(), input, size).ToList();
 
-var best = bla.OrderBy(t => t.a.Count).ThenBy(t => t.a.Multiply()).FirstOrDefault();
+var qe = permutations.OrderBy(t => t.Count).ThenBy(t => t.Aggregate((p,c) => p*c)).First();
+long result = qe.Aggregate((p, c) => p * c);
 
-Console.WriteLine(best.a.Multiply());
-//List<Group> permutations = new();
-//Permutations(new Group(), input, size, permutations);
-//var combinations = Combinations(permutations).ToList();
-//var combination = combinations.OrderBy(t => t.a.Count).ThenBy(t => t.a.Multiply()).FirstOrDefault();
-//Console.WriteLine(permutations.Count);
-//Console.WriteLine(combinations.Count);
-//Console.WriteLine(combination.a.Multiply());
+Console.WriteLine(result);
 
-void Permutations(Group current, int[] source, int check, List<Group> result)
+IEnumerable<List<long>> Permutation(List<long> current, int[] source, long check)
 {
-    foreach (var s in source)
+    if (current.Count > count) yield break;
+
+    long remaining = check - current.Sum();
+    for (int i = 0; i < source.Length; i++)
     {
-        var newc = new Group(current.Append(s));
-        if (newc.Sum() > check) continue;
-        if (result.Any(x => x.All(newc.Contains))) continue;
-        if (newc.Sum() == check)
+        var s = source[i];
+        if (s > remaining) continue;
+        var c = current.ToList();
+        c.Add(s);
+
+        if (s == remaining)
         {
-            //Console.WriteLine(newc);
-            result.Add(newc);
-            continue;
+            if (c.Count < count) count = c.Count;
+            yield return c;
         }
         else
         {
-            Permutations(newc, source.Where(t => t != s).ToArray(), check, result);
-        }
-    }
-}
-IEnumerable<(Group a, Group b, Group c)> Combinations(List<Group> permutations)
-{
-    foreach (var a in permutations)
-    {
-        foreach (var b in permutations)
-        {
-            foreach (var c in permutations)
+            foreach (var child in Permutation(c, source.Skip(i + 1).ToArray(), check))
             {
-                if (a.Any(b.Contains) || a.Any(c.Contains) ||
-                    b.Any(a.Contains) || b.Any(c.Contains) ||
-                    c.Any(a.Contains) || c.Any(b.Contains)) continue;
-                yield return (a, b, c);
+                yield return child;
             }
         }
     }
-}
-void Permutationa(Group a, Group b, Group c, int[] source, int check, List<(Group a, Group b, Group c)> result)
-{
-    foreach (var s in source)
-    {
-        if (a.Contains(s) || b.Contains(s) || c.Contains(s)) continue;
-
-        var newa = new Group(a);
-        var newb = new Group(b);
-        var newc = new Group(c);
-
-        if (a.Sum() + s <= check) newa = new Group(a.Append(s));
-        else if (b.Sum() + s <= check) newb = new Group(b.Append(s));
-        else if (c.Sum() + s <= check) newc = new Group(c.Append(s));
-        else continue;
-
-        if (newa.Sum() == check && newb.Sum() == check && newc.Sum() == check && !result.Any(t => t.a.All(newa.Contains) && t.b.All(newb.Contains) && t.c.All(newc.Contains)))
-        {
-            Console.WriteLine(newa + "\t\t" + newb + "\t\t" + newc);
-            result.Add((newa, newb, newc));
-            continue;
-        }
-        else
-        {
-            Permutationa(newa, newb, newc, source.Where(t => t != s).ToArray(), check, result);
-        }
-    }
-}
-
-void Permutationsa(List<int> current, int[] source, int check, List<List<int>> result)
-{
-    foreach (var s in source)
-    {
-        var n = current.Append(s).ToList();
-
-        if (n.Sum() > check) continue;
-        if (result.Any(t => t.ToString() == n.ToString())) continue;
-
-        if (n.Sum() == check)
-        {
-            result.Add(n);
-            continue;
-        }
-
-        Permutationsa(n, source.Where(t => t != s).ToArray(), check, result);
-    }
-}
-
-class Group : List<int>
-{
-    public Group() : base() { }
-    public Group(IEnumerable<int> collection) : base(collection) { }
-
-    public int Multiply()
-    {
-        return this.Aggregate((p, c) => p * c);
-    }
-
-    public Group ToList() => this.ToList();
-
-    public override string ToString() => string.Join(",", this.OrderByDescending(t => t));
 }
