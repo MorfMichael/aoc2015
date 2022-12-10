@@ -14,6 +14,9 @@ while (games.Any())
 {
     var game = games.Pop();
 
+    game.Player -= 1;
+    if (game.Player <= 0) continue;
+
     if (game.Cost > min) continue;
 
     game.Effects();
