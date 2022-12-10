@@ -1,315 +1,190 @@
-﻿//using System.Collections.Generic;
-//using System.Numerics;
+﻿var start = new Game
+{
+    Boss = 71,
+    Damage = 10,
+    Player = 50,
+    Mana = 500
+};
 
-//var boss = new Boss(71, 10);
-//var wizard = new Wizard(50, 500);
+Stack<Game> games = new();
+games.Push(start);
+int min = int.MaxValue;
 
-////var value = wizard.Turn(new Shield(), boss, new(), int.MaxValue).ToList();
+while (games.Any())
+{
+    var game = games.Pop();
 
-////var spells = Spell.All().Where(t => !wizard.Effects.Any(x => x.Type == t.Type)).ToList();
-////Console.WriteLine("New Turns: " + string.Join(",", spells));
-////foreach (var spell in spells)
-////{
-////    Console.WriteLine(spell);
-////    foreach (var t in wizard.Clone().Turn(spell, this.Clone(), costs.ToList(), min))
-////    {
-////        yield return t;
-////    }
-////}
-//bool start = true;
-//int min = 0, cost = 0;
-//while (!wizard.IsDead && !boss.IsDead)
-//{
-//    if (start)
-//    {
-//        var spells = Spell.All().Where(t => !wizard.Effects.Any(x => x.Type == t.Type)).ToList();
-//        Console.WriteLine("New Turns: " + string.Join(",", spells));
-//        foreach (var spell in spells)
-//        {
-//            int result = wizard.Turn(spell, boss, cost);
-//            if (result == -1 || result == 0) break;
-//        }
-//    }
-//    else
-//    {
-//        int result = boss.Turn(wizard);
-//        if (result == -1) return;
-//        if (result == 1)
-//        {
+    if (game.Cost > min) continue;
 
-//        }
-//    }
-//}
+    game.Effects();
+    if (game.Boss <= 0)
+    {
+        if (game.Cost < min) min = game.Cost;
+        continue;
+    }
 
+    List<Game> newgames = new();
+    var spells = GetSpells(game);
+    foreach (var spell in spells)
+    {
+        int cost = SpellCost(spell);
+        var copy = game.Generate();
+        copy.Cast(spell, cost);
+        if (copy.Boss <= 0)
+        {
+            if (copy.Cost < min) min = copy.Cost;
+            continue;
+        }
+        newgames.Add(copy);
+    }
 
-//class Boss
-//{
-//    public static Boss Create(int points, int damage) => new Boss(points, damage);
+    foreach (var newg in newgames)
+    {
+        newg.Effects();
+        if (newg.Boss <= 0)
+        {
+            if (newg.Cost < min) min = newg.Cost;
+            continue;
+        }
 
-//    public Boss(int points, int damage)
-//    {
-//        Points = points;
-//        Damage = damage;
-//    }
+        newg.DoDamage();
+        if (newg.Player <= 0) continue;
 
-//    public bool IsDead => Points <= 0;
+        games.Push(newg);
+    }
+}
 
-//    public string Name => this.GetType().Name;
-
-//    public int Points { get; set; }
-
-//    public int Damage { get; set; }
-
-//    public Boss Clone() => new Boss(Points, Damage);
-
-//    public int Turn(Wizard wizard)
-//    {
-//        Console.WriteLine($"{Environment.NewLine}{Name} | {Points} points");
-//        //Console.ReadKey()
-
-//        wizard.DoEffects(this);
-
-//        if (IsDead)
-//        {
-//            Console.ForegroundColor = ConsoleColor.Green;
-//            Console.WriteLine("Boss died!");
-//            Console.ResetColor();
-//            return 1;
-//        }
-
-//        int damage = Damage - wizard.Armor;
-//        damage = damage > 0 ? damage : 1;
-//        Console.WriteLine($"{Damage} - {wizard.Armor} = {damage}");
-//        //Console.ReadKey()
-//        wizard.Points -= damage;
-
-//        if (wizard.IsDead)
-//        {
-//            Console.ForegroundColor = ConsoleColor.Red;
-//            Console.WriteLine("Wizard died!");
-//            Console.ResetColor();
-//            return -1;
-//        }
-
-//        return 0;
-//    }
-
-//    public override string ToString() => IsDead ? Name + " is dead!" : $"{Name}: {Points}";
-//}
-
-//class Wizard
-//{
-//    public Wizard(int points, int mana)
-//    {
-//        Points = points;
-//        Mana = mana;
-//    }
-
-//    public string Name => this.GetType().Name;
-//    public int Damage { get; set; }
-//    public int Armor => Effects.OfType<Shield>().FirstOrDefault()?.Armor ?? 0;
-//    public int Points { get; set; }
-//    public int Mana { get; set; }
-
-//    public bool IsDead => Points <= 0;
-
-//    public List<Effect> Effects { get; set; } = new List<Effect>();
-
-//    public Wizard Clone() => new Wizard(Points, Mana) { Damage = Damage, Effects = Effects.ToList() };
-
-//    public void DoEffects(Boss boss)
-//    {
-//        foreach (var effect in Effects)
-//        {
-//            effect.Apply(this, boss);
-//        }
-//        Effects = Effects.Where(t => t.Timer > 0).ToList();
-//    }
-
-//    public int Turn(Spell spell, Boss boss, int cost)
-//    {
-//        Console.WriteLine($"{Environment.NewLine}{Name} | {(Effects.Any() ? string.Join(",",Effects) : "<no effects>")} | {Points} points | {Mana} mana");
-//        //Console.ReadKey()
-
-//        DoEffects(boss);
-
-//        if (boss.IsDead)
-//        {
-//            Console.ForegroundColor = ConsoleColor.Green;
-//            Console.WriteLine("Boss died!");
-//            Console.ResetColor();
-//            return cost;
-//        }
+Console.WriteLine(min);
 
 
-//        if (spell.Cost > Mana)
-//        {
-//            Console.ForegroundColor = ConsoleColor.Red;
-//            Console.WriteLine("Costs to high!");
-//            Console.ResetColor();
-//            return -1;
-//        }
+Spell[] GetSpells(Game game)
+{
+    var spells = Enum.GetValues(typeof(Spell)).OfType<Spell>();
+    if (game.Shield > 0) spells = spells.Where(t => t != Spell.Shield);
+    if (game.Poison > 0) spells = spells.Where(t => t != Spell.Poison);
+    if (game.Recharge > 0) spells = spells.Where(t => t != Spell.Recharge);
+    return spells.Where(t => SpellCost(t) <= game.Mana).ToArray();
+}
 
-//        Mana -= spell.Cost;
+void Log(string message)
+{
+    //Console.WriteLine(message);
+    //Console.ReadKey();
+}
 
-//        if (spell is Effect eff)
-//        {
-//            Console.WriteLine($"{eff.Name} | {eff.Cost} Mana");
-//            //Console.ReadKey()
-//            Effects.Add(eff);
-//        }
-//        else
-//            spell.Apply(this, boss);
+int SpellCost(Spell spell) => spell switch
+{
+    Spell.Missile => 53,
+    Spell.Drain => 73,
+    Spell.Shield => 113,
+    Spell.Poison => 173,
+    Spell.Recharge => 229,
+    _ => 0
+};
 
-//        if (boss.IsDead)
-//        {
-//            Console.ForegroundColor = ConsoleColor.Green;
-//            Console.WriteLine("Boss died!");
-//            Console.ResetColor();
-//        }
 
-//        return spell.Cost;
-//    }
-//}
 
-//enum SpellType
-//{
-//    Missile,
-//    Drain,
-//    Shield,
-//    Poison,
-//    Recharge
-//}
+enum Spell
+{
+    Missile,
+    Drain,
+    Shield,
+    Poison,
+    Recharge
+}
+class Game
+{
+    public int Boss { get; set; }
+    public int Damage { get; set; }
 
-//abstract class Spell
-//{
-//    public static List<Spell> All() => new() { new Missile(), new Drain(), new Shield(), new Poison(), new Recharge() };
+    public int Player { get; set; }
 
-//    public Spell(int cost)
-//    {
-//        Cost = cost;
-//    }
-//    public string Name => this.GetType().Name;
-//    public int Cost { get; set; }
-//    public abstract SpellType Type { get; }
+    public int Mana { get; set; }
+    public int Armor => Shield > 0 ? 7 : 0;
 
-//    public abstract void Apply(Wizard wizard, Boss boss);
+    public int Shield { get; set; }
+    public int Poison { get; set; }
+    public int Recharge { get; set; }
 
-//    public override string ToString() => Name;
-//}
+    public int Cost { get; set; }
 
-//abstract class Effect : Spell
-//{
-//    public Effect(int cost, int timer) : base(cost)
-//    {
-//        Timer = timer;
-//    }
+    public void Effects()
+    {
+        if (Shield > 0)
+        {
+            Log("EFFECT: Shield | " + Shield + " | Armor: " + Armor);
+            Shield--;
+        }
 
-//    public int Timer { get; set; }
+        if (Poison > 0)
+        {
+            Log("EFFECT: Poison | " + Poison + " | Boss: " + Boss + " -> " + (Boss - 3));
+            Boss -= 3;
+            Poison--;
+        }
 
-//    public override void Apply(Wizard wizard, Boss boss)
-//    {
-//        if (Timer > 0) Timer--;
-//        if (Timer == 0)
-//        {
-//            Console.WriteLine($"{Name} wears off");
-//            //Console.ReadKey()
-//        }
-//    }
+        if (Recharge > 0)
+        {
+            Log("EFFECT: Recharge | " + Recharge + " | Mana: " + Mana + " -> " + (Mana + 101));
+            Mana += 101;
+            Recharge--;
+        }
+    }
 
-//    public override string ToString() => base.ToString() + $" ({Timer})";
-//}
+    public void Cast(Spell spell, int cost)
+    {
+        Log("CAST: " + spell.ToString() + ": " + cost + " | " + Mana.ToString() + " -> " + (Mana - cost));
+        Cost += cost;
+        Mana -= cost;
 
-//class Missile : Spell
-//{
-//    public Missile() : base(53)
-//    {
-//        Damage = 4;
-//    }
+        switch (spell)
+        {
+            case Spell.Missile:
+                Log("Missile: " + Boss + " - 4 = " + (Boss - 4));
+                Boss -= 4;
+                break;
+            case Spell.Drain:
+                Log("Drain:" + Environment.NewLine + Boss + " - 2 = " + (Boss - 2) + Environment.NewLine + Player + " + 2 = " + (Player + 2));
+                Boss -= 2;
+                Player += 2;
+                break;
+            case Spell.Shield:
+                Shield = 6;
+                break;
+            case Spell.Poison:
+                Poison = 6;
+                break;
+            case Spell.Recharge:
+                Recharge = 5;
+                break;
+        }
+    }
 
-//    public override SpellType Type => SpellType.Missile;
-//    public int Damage { get; set; }
+    public void DoDamage()
+    {
+        int damage = Damage - Armor;
+        damage = damage > 0 ? damage : 1;
+        Log("Boss damage: " + Player + " - " + damage + " = " + (Player - damage));
+        Player -= damage;
+    }
 
-//    public override void Apply(Wizard wizard, Boss boss)
-//    {
-//        Console.WriteLine($"Player casts Magic Missile, dealing {Damage} damage. Costs {Cost}");
-//        //Console.ReadKey()
-//        boss.Points -= Damage;
-//    }
-//}
+    public Game Generate() => new Game
+    {
+        Boss = Boss,
+        Damage = Damage,
+        Player = Player,
+        Mana = Mana,
+        Shield = Shield,
+        Poison = Poison,
+        Recharge = Recharge,
+        Cost = Cost
+    };
 
-//class Drain : Spell
-//{
-//    public Drain() : base(73)
-//    {
-//        Damage = 2;
-//        Points = 2;
-//    }
+    public override string ToString() => $"Boss: {Boss}, Player: {Player}, Mana: {Mana}, Armor: {Armor}, Shield: {Shield}, Poison: {Poison}, Recharge: {Recharge}";
 
-//    public override SpellType Type => SpellType.Drain;
-//    public int Damage { get; set; }
-//    public int Points { get; set; }
-
-//    public override void Apply(Wizard wizard, Boss boss)
-//    {
-//        Console.WriteLine($"Player casts Drain, dealing {Damage} damage, and healing {Points} hit points. Costs {Cost}");
-//        //Console.ReadKey()
-//        wizard.Points += 2;
-//        boss.Points -= Damage;
-//    }
-//}
-
-//class Shield : Effect
-//{
-//    public Shield() : base(113, 6)
-//    {
-//        Armor = 7;
-//    }
-
-//    public override SpellType Type => SpellType.Shield;
-//    public int Armor { get; set; }
-
-//    public override void Apply(Wizard wizard, Boss boss)
-//    {
-//        base.Apply(wizard, boss);
-//        Console.WriteLine("Shield's Timer is now " + Timer);
-//        //Console.ReadKey()
-//    }
-//}
-
-//class Poison : Effect
-//{
-//    public Poison() : base(173, 6)
-//    {
-//        Damage = 3;
-//    }
-
-//    public override SpellType Type => SpellType.Poison;
-//    public int Damage { get; set; }
-
-//    public override void Apply(Wizard wizard, Boss boss)
-//    {
-//        Console.WriteLine($"Poison deals {Damage} damage; its timer is now {Timer}.");
-//        //Console.ReadKey()
-//        boss.Points -= Damage;
-//        base.Apply(wizard, boss);
-//    }
-//}
-
-//class Recharge : Effect
-//{
-//    public Recharge() : base(229, 5)
-//    {
-//        Mana = 101;
-//    }
-
-//    public override SpellType Type => SpellType.Recharge;
-//    public int Mana { get; set; }
-//    public override void Apply(Wizard wizard, Boss boss)
-//    {
-//        Console.WriteLine($"Recharge provides {Mana} mana; its timer is now {Timer}.");
-//        //Console.ReadKey()
-//        wizard.Mana += Mana;
-//        base.Apply(wizard, boss);
-//    }
-//}
+    void Log(string message)
+    {
+        //Console.WriteLine(message);
+        //Console.ReadKey();
+    }
+}
